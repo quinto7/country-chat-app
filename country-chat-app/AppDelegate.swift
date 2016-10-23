@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import Firebase
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -16,7 +17,22 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        FIRApp.configure()
+        logUser()
         return true
+    }
+    
+    //Para hacer el login automatico cuando el usuario entra a la app
+    func logUser(){
+        
+        if FIRAuth.auth()?.currentUser != nil{
+            
+            let storyboard = UIStoryboard(name: "Main", bundle: nil)
+            let vc = storyboard.instantiateViewController(withIdentifier: "HomeScreen") as! UITabBarController
+            self.window?.rootViewController = vc
+            print("logged in autommatically")
+            
+        }
     }
 
     func applicationWillResignActive(_ application: UIApplication) {
