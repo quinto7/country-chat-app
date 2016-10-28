@@ -10,6 +10,7 @@ import UIKit
 
 class ChatCell: UITableViewCell {
 
+    @IBOutlet weak var timeStamp: UILabel!
     @IBOutlet weak var usernameLbl: UILabel!
     @IBOutlet weak var lastMessageLbl: UILabel!
     @IBOutlet weak var userImage: RoundedImageView!

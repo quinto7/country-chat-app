@@ -22,6 +22,7 @@ struct ChatRoom {
     var ref: FIRDatabaseReference!
     var userImageUrl: String!
     var otherUserImageUrl:String!
+    var timestamp:NSNumber!
     
     init(snapshot: FIRDataSnapshot){
         
@@ -38,10 +39,11 @@ struct ChatRoom {
         lastMessage = values["lastMessage"] as? String
         userImageUrl = values["userImageUrl"] as? String
         otherUserImageUrl = values["otherUserImageUrl"] as? String
+        timestamp = values["timestamp"] as? NSNumber
         
     }
     
-    init(username: String, otherUsername: String, userId: String, otherUserId: String, members: [String], chatRoomId: String, key: String = "", lastMessage: String, userImageUrl: String, otherUserImageUrl:String){
+    init(username: String, otherUsername: String, userId: String, otherUserId: String, members: [String], chatRoomId: String, key: String = "", lastMessage: String, userImageUrl: String, otherUserImageUrl:String, timestamp:NSNumber){
         
         self.username = username
         self.otherUsername = otherUsername
@@ -52,11 +54,12 @@ struct ChatRoom {
         self.lastMessage = lastMessage
         self.userImageUrl = userImageUrl
         self.otherUserImageUrl = otherUserImageUrl
+        self.timestamp = timestamp
         
     }
     
     func toAny() -> [String: AnyObject]{
         
-        return ["username": username as AnyObject, "otherUsername": otherUsername as AnyObject, "userId": userId as AnyObject, "otherUserId": otherUserId as AnyObject, "members": members as AnyObject, "chatRoomId": chatRoomId as AnyObject, "lastMessage": lastMessage as AnyObject, "userImageUrl": userImageUrl as AnyObject, "otherUserImageUrl":otherUserImageUrl as AnyObject]
+        return ["username": username as AnyObject, "otherUsername": otherUsername as AnyObject, "userId": userId as AnyObject, "otherUserId": otherUserId as AnyObject, "members": members as AnyObject, "chatRoomId": chatRoomId as AnyObject, "lastMessage": lastMessage as AnyObject, "userImageUrl": userImageUrl as AnyObject, "otherUserImageUrl":otherUserImageUrl as AnyObject, "timestamp": timestamp]
     }
 }

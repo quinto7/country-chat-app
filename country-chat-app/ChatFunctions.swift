@@ -55,7 +55,7 @@ struct ChatFunctions {
                 
                 if let values = snapshot.value as? [String: AnyObject]{
                     for chatRoom in values{
-                        if chatRoom.value["chatRoomId"] as? String == chatRoomId{
+                        if chatRoom.value["chatRoomId"] as! String == chatRoomId{
                             createChatRoom = false
                         }
                     }
@@ -64,7 +64,7 @@ struct ChatFunctions {
             }
             //Si no existe, se va a crear una
             if createChatRoom{
-                self.createNewChatRoomId(username: user1.username, otherUsername: user2.username, userId: user1.uid, otherUserId: user2.uid, members: members, chatRoomId: chatRoomId, lastMessage: "", userImageUrl: user1.profileImageUrl!, otherUserImageUrl: user2.profileImageUrl!)
+                self.createNewChatRoomId(username: user1.username, otherUsername: user2.username, userId: user1.uid, otherUserId: user2.uid, members: members, chatRoomId: chatRoomId, lastMessage: "", userImageUrl: user1.profileImageUrl!, otherUserImageUrl: user2.profileImageUrl!, timestamp: NSNumber(value: NSDate().timeIntervalSince1970))
             }
             
             
@@ -76,9 +76,9 @@ struct ChatFunctions {
         
     }
     
-    private func createNewChatRoomId(username: String, otherUsername: String, userId: String, otherUserId: String, members: [String], chatRoomId: String, lastMessage: String, userImageUrl: String, otherUserImageUrl:String){
+    private func createNewChatRoomId(username: String, otherUsername: String, userId: String, otherUserId: String, members: [String], chatRoomId: String, lastMessage: String, userImageUrl: String, otherUserImageUrl:String, timestamp: NSNumber){
         
-        let newChatRoom = ChatRoom(username: username, otherUsername: otherUsername, userId: userId, otherUserId: otherUserId, members: members, chatRoomId: chatRoomId, lastMessage: lastMessage, userImageUrl: userImageUrl, otherUserImageUrl: otherUserImageUrl)
+        let newChatRoom = ChatRoom(username: username, otherUsername: otherUsername, userId: userId, otherUserId: otherUserId, members: members, chatRoomId: chatRoomId, lastMessage: lastMessage, userImageUrl: userImageUrl, otherUserImageUrl: otherUserImageUrl, timestamp: timestamp)
         
         let chatRoomRef = databaseRef.child("chatrooms").child(chatRoomId)
         chatRoomRef.setValue(newChatRoom.toAny())

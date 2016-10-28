@@ -72,7 +72,7 @@ class ContactsVC: UIViewController, UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
         //Creo un nuevo chatId en firebase si no existe y se existe solo se abre
-        let currentUser = User(username: FIRAuth.auth()!.currentUser!.displayName!, userId: FIRAuth.auth()!.currentUser!.uid, profileImageUrl: String(describing: FIRAuth.auth()!.currentUser!.photoURL))
+        let currentUser = User(username: FIRAuth.auth()!.currentUser!.displayName!, userId: FIRAuth.auth()!.currentUser!.uid, profileImageUrl: String(describing: FIRAuth.auth()!.currentUser!.photoURL!))
         chatFunctions.startChat(user1: currentUser, user2: usersArray[indexPath.row])
         
         performSegue(withIdentifier: "ChatVC", sender: self)
@@ -117,6 +117,8 @@ class ContactsVC: UIViewController, UITableViewDelegate, UITableViewDataSource {
         }
     }
     
+    //MARK: Segue Method
+    
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         
         if segue.identifier == "ChatVC"{
@@ -126,9 +128,8 @@ class ContactsVC: UIViewController, UITableViewDelegate, UITableViewDataSource {
                 chatVC.senderId = FIRAuth.auth()!.currentUser!.uid
                 chatVC.senderDisplayName = FIRAuth.auth()!.currentUser!.displayName
                 chatVC.chatRoomId = chatFunctions.chatRoom_Id
+                
             }
-    
-            
             
         }
         

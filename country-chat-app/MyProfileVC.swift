@@ -70,7 +70,7 @@ class MyProfileVC: UIViewController, UITableViewDelegate, UITableViewDataSource 
     @IBAction func signOutBtnPressed(sender:UIBarButtonItem){
         
         do {
-            try FIRAuth.auth()?.signOut()
+            try FIRAuth.auth()!.signOut()
             
             let storyboard = UIStoryboard(name: "Main", bundle: nil)
             let controller = storyboard.instantiateViewController(withIdentifier: "LoginScreen")
@@ -100,7 +100,7 @@ class MyProfileVC: UIViewController, UITableViewDelegate, UITableViewDataSource 
         
         if indexPath.row == 0{
             if let emailCell = tableView.dequeueReusableCell(withIdentifier: "emailCell"){
-                emailCell.detailTextLabel?.text = FIRAuth.auth()?.currentUser?.email
+                emailCell.detailTextLabel?.text = FIRAuth.auth()!.currentUser!.email
                 
                 return emailCell
             }

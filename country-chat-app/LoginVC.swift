@@ -8,7 +8,7 @@
 
 import UIKit
 
-class LoginVC: UIViewController {
+class LoginVC: UIViewController, UITextFieldDelegate {
 
     @IBOutlet weak var passwordTxtFld: RoundTextField!
     @IBOutlet weak var emailTxtFld: RoundTextField!
@@ -17,6 +17,9 @@ class LoginVC: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        emailTxtFld.delegate = self
+        passwordTxtFld.delegate = self
         
         self.hideKeyboardWhenTappedAround()
         self.hideKeyboardWhenSwipeDown()

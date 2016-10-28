@@ -14,15 +14,20 @@ import FirebaseAuth
 class ChatListVC: UITableViewController {
 
     var chatsArray = [ChatRoom]()
+    var chatFunctions = ChatFunctions()
     
     override func viewDidLoad() {
         super.viewDidLoad()
 
         fetchChats()
+        NotificationCenter.default.addObserver(self, selector: #selector(ChatListVC.fetchChats), name: NSNotification.Name(rawValue: "updateChats"), object: nil)
+        
     }
 
     //Load chats from firebase
     func fetchChats(){
+        
+        chatsArray.removeAll(keepingCapacity: false)  //Para que no aparezca duplicado
         
         databaseRef.child("chatrooms").queryOrdered(byChild: "userId").queryEqual(toValue: FIRAuth.auth()!.currentUser!.uid).observe(.childAdded, with: { (snapshot) in
             
@@ -39,8 +44,9 @@ class ChatListVC: UITableViewController {
             let lastMessage = values["lastMessage"] as! String
             let userImageUrl = values["userImageUrl"] as! String
             let otherUserImageUrl = values["otherUserImageUrl"] as! String
+            let timestamp = values["timestamp"] as! NSNumber
             
-            var newChat = ChatRoom(username: username, otherUsername: otherUsername, userId: userId, otherUserId: otherUserId, members: members, chatRoomId: chatRoomId, lastMessage: lastMessage, userImageUrl: userImageUrl, otherUserImageUrl: otherUserImageUrl)
+            var newChat = ChatRoom(username: username, otherUsername: otherUsername, userId: userId, otherUserId: otherUserId, members: members, chatRoomId: chatRoomId, lastMessage: lastMessage, userImageUrl: userImageUrl, otherUserImageUrl: otherUserImageUrl, timestamp: timestamp)
             newChat.ref = ref
             newChat.key = key
             
@@ -68,8 +74,9 @@ class ChatListVC: UITableViewController {
             let lastMessage = values["lastMessage"] as! String
             let userImageUrl = values["userImageUrl"] as! String
             let otherUserImageUrl = values["otherUserImageUrl"] as! String
+            let timestamp = values["timestamp"] as! NSNumber
             
-            var newChat = ChatRoom(username: username, otherUsername: otherUsername, userId: userId, otherUserId: otherUserId, members: members, chatRoomId: chatRoomId, lastMessage: lastMessage, userImageUrl: userImageUrl, otherUserImageUrl: otherUserImageUrl)
+            var newChat = ChatRoom(username: username, otherUsername: otherUsername, userId: userId, otherUserId: otherUserId, members: members, chatRoomId: chatRoomId, lastMessage: lastMessage, userImageUrl: userImageUrl, otherUserImageUrl: otherUserImageUrl, timestamp: timestamp)
             newChat.ref = ref
             newChat.key = key
             
@@ -108,6 +115,30 @@ class ChatListVC: UITableViewController {
             cell.usernameLbl.text = chatsArray[indexPath.row].username
         }
         
+        //Seteamos el timestamp
+        let oldDate = NSDate(timeIntervalSince1970: TimeInterval(chatsArray[indexPath.row].timestamp))
+        let currentDate = NSDate()
+        let calendar = NSCalendar.current
+        
+        let diffenceOfDate = calendar.dateComponents([.second, .minute, .hour, .day, .weekOfMonth], from: oldDate as Date, to: currentDate as Date)
+        
+        if diffenceOfDate.second! <= 0{
+            cell.timeStamp.text = "now"
+        }else if diffenceOfDate.second! > 0 && diffenceOfDate.minute! == 0{
+            cell.timeStamp.text = "\(diffenceOfDate.second!)s"
+        }else if diffenceOfDate.minute! > 0 && diffenceOfDate.hour! == 0{
+            cell.timeStamp.text = "\(diffenceOfDate.minute!)m"
+        }else if diffenceOfDate.hour! > 0 && diffenceOfDate.day! == 0{
+            cell.timeStamp.text = "\(diffenceOfDate.hour!)h"
+        }else if diffenceOfDate.day! > 0 && diffenceOfDate.weekOfMonth! == 0{
+            cell.timeStamp.text = "\(diffenceOfDate.day!)d"
+        }else if diffenceOfDate.weekOfMonth! > 0 {
+            cell.timeStamp.text = "\(diffenceOfDate.weekOfMonth!)w"
+        }
+        
+        
+        cell.lastMessageLbl.text = chatsArray[indexPath.row].lastMessage
+        
         if let urlString = userPhotoUrlStr{
             FIRStorage.storage().reference(forURL: urlString).data(withMaxSize: 1 * 1024 * 1024, completion: { (imgData, error) in
                 
@@ -133,6 +164,40 @@ class ChatListVC: UITableViewController {
             self.chatsArray.remove(at: indexPath.row)
             self.tableView.reloadData()
         }
+    }
+    
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        
+        //Creo un nuevo chatId en firebase si no existe y se existe solo se abre
+        let currentUser = User(username: FIRAuth.auth()!.currentUser!.displayName!, userId: FIRAuth.auth()!.currentUser!.uid, profileImageUrl: String(describing: FIRAuth.auth()!.currentUser!.photoURL!))
+        var otherUser:User!
+        
+        if currentUser.uid == chatsArray[indexPath.row].userId{
+            otherUser = User(username: chatsArray[indexPath.row].otherUsername, userId: chatsArray[indexPath.row].otherUserId, profileImageUrl: chatsArray[indexPath.row].otherUserImageUrl)
+        }else{
+            otherUser = User(username: chatsArray[indexPath.row].username, userId: chatsArray[indexPath.row].userId, profileImageUrl: chatsArray[indexPath.row].userImageUrl)
+        }
+        
+        chatFunctions.startChat(user1: currentUser, user2: otherUser)
+        
+        performSegue(withIdentifier: "goToChat", sender: self)
+    }
+    
+    //MARK: Segue Method
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        
+        if segue.identifier == "goToChat"{
+            
+            if let chatVC = segue.destination as? ChatVC{
+                
+                chatVC.senderId = FIRAuth.auth()!.currentUser!.uid
+                chatVC.senderDisplayName = FIRAuth.auth()!.currentUser!.displayName
+                chatVC.chatRoomId = chatFunctions.chatRoom_Id
+            }
+            
+        }
+        
     }
     
 

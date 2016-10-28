@@ -14,6 +14,8 @@ struct Message {
     var username: String!
     var text: String!
     var key: String = ""
+    var mediaType:String!
+    var mediaUrl:String!
     var ref: FIRDatabaseReference!
     var senderId: String!
     
@@ -26,19 +28,24 @@ struct Message {
         username = values["username"] as? String
         text = values["text"] as? String
         senderId = values["senderId"] as? String
+        mediaType = values["mediaType"] as? String
+        mediaUrl = values["mediaUrl"] as? String
+
         
     }
     
-    init(text:String, key:String = "", username:String, senderId: String){
+    init(text:String, key:String = "", username:String, senderId: String, mediaType:String, mediaUrl:String){
         
         self.text = text
         self.key = key
         self.username = username
         self.senderId = senderId
+        self.mediaUrl = mediaUrl
+        self.mediaType = mediaType
     }
     
     func toAny() -> [String : Any]{
         
-        return ["text": text, "username":username, "senderId": senderId]
+        return ["text": text, "username":username, "senderId": senderId, "mediaType": mediaType, "mediaUrl": mediaUrl]
     }
 }

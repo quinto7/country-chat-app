@@ -8,7 +8,7 @@
 
 import UIKit
 
-class SignInVC: UIViewController,UIImagePickerControllerDelegate, UINavigationControllerDelegate, UIPickerViewDelegate, UIPickerViewDataSource {
+class SignInVC: UIViewController,UIImagePickerControllerDelegate, UINavigationControllerDelegate, UIPickerViewDelegate, UIPickerViewDataSource, UITextFieldDelegate {
 
     @IBOutlet weak var signUpBtn: RoundedButton!
     @IBOutlet weak var chosseImgBtn: UIButton!
@@ -150,16 +150,7 @@ class SignInVC: UIViewController,UIImagePickerControllerDelegate, UINavigationCo
         
     }
     
-    //To dismiss picker and keyboard when button pressed
     
-    func resignAllFirstResponder(){
-    
-        countryTxtFld.resignFirstResponder()
-        emailTxtFld.resignFirstResponder()
-        passwordTxtFld.resignFirstResponder()
-        usernameTxtFld.resignFirstResponder()
-    
-    }
     
     //MARK: ImagePicker
     
@@ -176,6 +167,24 @@ class SignInVC: UIViewController,UIImagePickerControllerDelegate, UINavigationCo
     
     //MARK: Keyboard
     
+    //To dismiss picker and keyboard when button pressed
+    func resignAllFirstResponder(){
+        
+        countryTxtFld.resignFirstResponder()
+        emailTxtFld.resignFirstResponder()
+        passwordTxtFld.resignFirstResponder()
+        usernameTxtFld.resignFirstResponder()
+        
+    }
+    //To dismiss keyboard with return button
+    func textFieldShouldReturn(_ textField:UITextField)-> Bool{
+        countryTxtFld.resignFirstResponder()
+        emailTxtFld.resignFirstResponder()
+        passwordTxtFld.resignFirstResponder()
+        usernameTxtFld.resignFirstResponder()
+        
+        return true
+    }
 
     
 

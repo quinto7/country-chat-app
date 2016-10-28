@@ -31,6 +31,8 @@
 		9EB2BDC61DA7EF2000E80541 /* ChatFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EB2BDC51DA7EF2000E80541 /* ChatFunctions.swift */; };
 		9EB2BDE61DB8570000E80541 /* ChatListVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EB2BDE51DB8570000E80541 /* ChatListVC.swift */; };
 		9EB2BDE81DBC426900E80541 /* ChatCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EB2BDE71DBC426900E80541 /* ChatCell.swift */; };
+		9EB2BDEA1DBD6EC400E80541 /* SettingsVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EB2BDE91DBD6EC400E80541 /* SettingsVC.swift */; };
+		9ED16F331DBD9B6800A457C4 /* EditProfileVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9ED16F321DBD9B6800A457C4 /* EditProfileVC.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -63,6 +65,8 @@
 		9EB2BDC51DA7EF2000E80541 /* ChatFunctions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChatFunctions.swift; sourceTree = "<group>"; };
 		9EB2BDE51DB8570000E80541 /* ChatListVC.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChatListVC.swift; sourceTree = "<group>"; };
 		9EB2BDE71DBC426900E80541 /* ChatCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChatCell.swift; sourceTree = "<group>"; };
+		9EB2BDE91DBD6EC400E80541 /* SettingsVC.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsVC.swift; sourceTree = "<group>"; };
+		9ED16F321DBD9B6800A457C4 /* EditProfileVC.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditProfileVC.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -153,6 +157,8 @@
 				9E6459241D9F09CC008A4BF2 /* ContactsVC.swift */,
 				9EB2BDBF1DA71E1300E80541 /* ChatVC.swift */,
 				9EB2BDE51DB8570000E80541 /* ChatListVC.swift */,
+				9EB2BDE91DBD6EC400E80541 /* SettingsVC.swift */,
+				9ED16F321DBD9B6800A457C4 /* EditProfileVC.swift */,
 			);
 			name = Controller;
 			sourceTree = "<group>";
@@ -310,11 +316,13 @@
 				9EB2BDC61DA7EF2000E80541 /* ChatFunctions.swift in Sources */,
 				9E6458E51D8F4D28008A4BF2 /* RoundedImageView.swift in Sources */,
 				9EB2BDE81DBC426900E80541 /* ChatCell.swift in Sources */,
+				9ED16F331DBD9B6800A457C4 /* EditProfileVC.swift in Sources */,
 				9E6459271D9F09F1008A4BF2 /* ContactsCell.swift in Sources */,
 				9E6458F01D93765F008A4BF2 /* MyProfileVC.swift in Sources */,
 				9E6458E71D8F564B008A4BF2 /* SignInVC.swift in Sources */,
 				9E6458E11D8F4697008A4BF2 /* RoundTextField.swift in Sources */,
 				9EB2BDC41DA7E4BA00E80541 /* ChatRoom.swift in Sources */,
+				9EB2BDEA1DBD6EC400E80541 /* SettingsVC.swift in Sources */,
 				9E6458EB1D90BD7C008A4BF2 /* User.swift in Sources */,
 				9E6458C91D8F44A2008A4BF2 /* AppDelegate.swift in Sources */,
 				9EB2BDE61DB8570000E80541 /* ChatListVC.swift in Sources */,

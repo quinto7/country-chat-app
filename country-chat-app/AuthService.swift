@@ -45,7 +45,7 @@ class AuthService{
                 //Login
                 let appDel:AppDelegate = UIApplication.shared.delegate as! AppDelegate
                 appDel.logUser()
-                print("User \(user?.displayName) has login successfully")
+                print("User \(user!.displayName) has login successfully")
                 onComplete?(nil, user)
                 
             }
@@ -57,7 +57,7 @@ class AuthService{
     
     func SignIn(email: String, username: String, password:String, country:String, data:Data){
         
-        FIRAuth.auth()?.createUser(withEmail: email, password: password, completion: { (user, error) in
+        FIRAuth.auth()!.createUser(withEmail: email, password: password, completion: { (user, error) in
             
             if error == nil{
                 
@@ -65,7 +65,7 @@ class AuthService{
                 
             }else{
                 
-                print(error?.localizedDescription)
+                print(error!.localizedDescription)
                 
             }
             
@@ -74,7 +74,7 @@ class AuthService{
     }
     
     //2 -- Save the user Info: Profile pic
-    private func setUserInfo(user:FIRUser, username:String, password:String, country:String, data:Data){
+    func setUserInfo(user:FIRUser, username:String, password:String, country:String, data:Data){
         
         let imagePath = "profilePic\(user.uid)/userPic.jpg"
         let imageRef = storageRef.child(imagePath)
@@ -89,7 +89,7 @@ class AuthService{
                 let changeRequest = user.profileChangeRequest()
                 changeRequest.displayName = username
                 
-                if let imageUrl = metadata?.downloadURL(){
+                if let imageUrl = metadata!.downloadURL(){
                     changeRequest.photoURL = imageUrl
                 }
                 
@@ -101,12 +101,12 @@ class AuthService{
                         self.saveUserInfo(user: user, username: username, password: password, country: country)
                         
                     }else{
-                        print(error?.localizedDescription)
+                        print(error!.localizedDescription)
                     }
                 })
                 
             }else{
-                print(error?.localizedDescription)
+                print(error!.localizedDescription)
             }
         }
         
@@ -126,6 +126,8 @@ class AuthService{
         
         
     }
+    
+    
     
     func handleFirebaseError(error:NSError, onComplete: Completion){
         print(error.debugDescription)

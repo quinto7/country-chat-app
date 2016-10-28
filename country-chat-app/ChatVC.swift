@@ -11,10 +11,13 @@ import JSQMessagesViewController
 import FirebaseAuth
 import FirebaseStorage
 import FirebaseDatabase
+import MobileCoreServices
+import AVKit
 
-class ChatVC: JSQMessagesViewController {
+class ChatVC: JSQMessagesViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
 
     var chatRoomId:String!
+    var otherUsername:String!
     
     var outgoingBubbleImageView: JSQMessagesBubbleImage!
     var incomingBubbleImageView: JSQMessagesBubbleImage!
@@ -38,7 +41,7 @@ class ChatVC: JSQMessagesViewController {
 
         observeTypingUser()
         
-        self.title = "Message" //TODO: Que aparezca el nombre del q estoy hablando
+        self.title = "Messages" //TODO: Que aparezca el nombre del q estoy hablando
         
         let factory = JSQMessagesBubbleImageFactory()
         incomingBubbleImageView = factory?.incomingMessagesBubbleImage(with: UIColor.jsq_messageBubbleLightGray())
@@ -48,27 +51,53 @@ class ChatVC: JSQMessagesViewController {
         collectionView.collectionViewLayout.incomingAvatarViewSize = CGSize.zero
         collectionView.collectionViewLayout.outgoingAvatarViewSize = CGSize.zero
        
+        //Put a background to the chat. TODO: Que el usuario pueda agregar el que quiera
+        collectionView.backgroundView = UIImageView(image: UIImage(named: "whatsappbg"))
         
+        fetchMessages()
     }
 
     
-    
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(true)
+    //Para recuperar todos los mensajes guardados en firebase
+    func fetchMessages(){
         
-        //Para recuperar todos los mensajes guardados en firebase
         let messageQuery = databaseRef.child("chatrooms").child(chatRoomId).child("messages").queryLimited(toLast: 30)
         messageQuery.observe(.childAdded, with: { (snapshot) in
             
             let values = snapshot.value as! Dictionary<String, Any>
             
-            let senderId = values["senderId"] as? String
-            let text = values["text"] as? String
-            let displayName = values["username"] as? String
+            let senderId = values["senderId"] as! String
+            let text = values["text"] as! String
+            let displayName = values["username"] as! String
+            let mediaType = values["mediaType"] as! String
+            let mediaUrl = values["mediaUrl"] as! String
+
+            switch mediaType{
+            case "Text":
+                
+                self.messages.append(JSQMessage(senderId: senderId, displayName: displayName, text: text))
+                
+            case "Image":
+                
+                let data = NSData(contentsOf: URL(string: mediaUrl)!)
+                let picture = UIImage(data: data as! Data)
+                let photo = JSQPhotoMediaItem(image: picture)
+                self.messages.append(JSQMessage(senderId: senderId, displayName: displayName, media: photo))
+                
+            case "Video":
+                
+                if let url = URL(string: mediaUrl){
+                    
+                    let video = JSQVideoMediaItem(fileURL: url, isReadyToPlay: true)
+                    self.messages.append(JSQMessage(senderId: senderId, displayName: displayName, media: video))
+                    
+                }
+                
+            default:
+                break
+            }
             
-            self.addMessage(text: text!, senderId: senderId!, displayName: displayName!)
-            self.finishReceivingMessage()  //Para actualizar el UI
-            
+            self.finishReceivingMessage()
             
         }) { (error) in
             
@@ -108,29 +137,47 @@ class ChatVC: JSQMessagesViewController {
         
     }
     
-    //Func que toma el mensaje y lo agrega a un array
-    private func addMessage(text:String, senderId:String, displayName:String){
-        //TODO: Hacer un if let?
-        let message = JSQMessage(senderId: senderId, displayName: displayName, text: text)
-        messages.append(message!)
-        
-    }
     
     //Func para mandar mensajes (Es decir lo guardamos en firebase)
     override func didPressSend(_ button: UIButton!, withMessageText text: String!, senderId: String!, senderDisplayName: String!, date: Date!) {
         
         let messageRef = databaseRef.child("chatrooms").child(chatRoomId).child("messages").childByAutoId()
-        let message = Message(text: text, username: senderDisplayName, senderId: senderId)
+        let message = Message(text: text, username: senderDisplayName, senderId: senderId, mediaType: "Text", mediaUrl: "")
         
         messageRef.setValue(message.toAny()) { (error, ref) in
             
             if error == nil{
+                //Para setear el lastMessage de la conversacion en firebase
+                let lastMessageRef = databaseRef.child("chatrooms").child(self.chatRoomId).child("lastMessage")
+                lastMessageRef.setValue(text, withCompletionBlock: { (error, ref) in
+                    
+                    if error == nil{
+                        //Para notificar al ChatListVC sobre el cambio en lastMessage
+                        NotificationCenter.default.post(name: NSNotification.Name(rawValue: "updateChats"), object: nil)
+                        
+                    }else{
+                        print(error!.localizedDescription)
+                    }
+                })
+                
+                //Para setear el timestamp del ultimo mensaje en firebase
+                let timestampRef = databaseRef.child("chatrooms").child(self.chatRoomId).child("timestamp")
+                timestampRef.setValue(NSDate().timeIntervalSince1970, withCompletionBlock: { (error, ref) in
+                    
+                    if error == nil{
+                    
+                        
+                    }else{
+                        print(error!.localizedDescription)
+                    }
+                })
+                
                 //Que haya un sonido cuando mando un mesaje
                 JSQSystemSoundPlayer.jsq_playMessageSentSound()
                 self.finishSendingMessage()
                 
             }else{
-                print(error?.localizedDescription)
+                print(error!.localizedDescription)
             }
             
         }
@@ -168,14 +215,215 @@ class ChatVC: JSQMessagesViewController {
         let cell = super.collectionView(collectionView, cellForItemAt: indexPath) as! JSQMessagesCollectionViewCell
         let message = messages[indexPath.item]
         
-        //Logica para ver de que lado va la bubble (dependiendo quien soy)
-        if message.senderId == senderId{
-            cell.textView.textColor = UIColor.white
-        }else{
-            cell.textView.textColor = UIColor.black
+        if !message.isMediaMessage{   //Si no tiene media el mensaje
+            //Logica para ver de que lado va la bubble (dependiendo quien soy)
+            if message.senderId == senderId{
+                cell.textView.textColor = UIColor.white
+            }else{
+                cell.textView.textColor = UIColor.black
+            }
         }
         
+        
         return cell
+    }
+    
+    override func didPressAccessoryButton(_ sender: UIButton!) {
+        
+        let alertcontroller = UIAlertController(title: "Media", message: "Choose your media type", preferredStyle: .actionSheet)
+        
+        let imageAction = UIAlertAction(title: "Image", style: .default) { (action) in
+            self.getMedia(mediaType: kUTTypeImage)
+            
+        }
+        let videoAction = UIAlertAction(title: "Video", style: .default) { (action) in
+            self.getMedia(mediaType: kUTTypeMovie)
+            
+        }
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        
+        alertcontroller.addAction(imageAction)
+        alertcontroller.addAction(videoAction)
+        alertcontroller.addAction(cancelAction)
+        
+        present(alertcontroller, animated: true, completion: nil)
+        
+    }
+    //Para ver los videos en la app
+    override func collectionView(_ collectionView: JSQMessagesCollectionView!, didTapMessageBubbleAt indexPath: IndexPath!) {
+        
+        let message = messages[indexPath.item]
+        
+        if message.isMediaMessage{
+            if let media = message.media as? JSQVideoMediaItem{
+                let videoplayer = AVPlayer(url: media.fileURL)
+                let avplayerviewcontroller = AVPlayerViewController()
+                avplayerviewcontroller.player = videoplayer
+                present(avplayerviewcontroller, animated: true, completion: nil)
+            }
+        }
+    }
+    
+    //Save image and videos in firebase
+    private func saveMediaMessage(withImage image:UIImage?, withVideo: URL?){
+        
+        if let image = image{
+            let imagePath = "messageWithMedia\(chatRoomId + NSUUID().uuidString)/photo.jpg"
+            let imageRef = storageRef.child(imagePath)
+            
+            let metaData = FIRStorageMetadata()
+            metaData.contentType = "image/jpeg"
+            
+            let imgData = UIImageJPEGRepresentation(image, 0.2)!
+            imageRef.put(imgData, metadata: metaData, completion: { (metadata, error) in
+                
+                if error == nil{
+                    
+                    let message = Message(text: "", username: self.senderDisplayName, senderId: self.senderId, mediaType: "Image", mediaUrl: String(describing: metadata!.downloadURL()!))
+                    let messageRef = databaseRef.child("chatrooms").child(self.chatRoomId).child("messages").childByAutoId()
+                    
+                    messageRef.setValue(message.toAny(), withCompletionBlock: { (error, ref) in
+                        
+                        if error == nil{
+                            //Para setear el lastMessage de la conversacion en firebase
+                            let lastMessageRef = databaseRef.child("chatrooms").child(self.chatRoomId).child("lastMessage")
+                            lastMessageRef.setValue("Image", withCompletionBlock: { (error, ref) in
+                                
+                                if error == nil{
+                                    //Para notificar al ChatListVC sobre el cambio en lastMessage
+                                    NotificationCenter.default.post(name: NSNotification.Name(rawValue: "updateChats"), object: nil)
+                                    
+                                }else{
+                                    print(error!.localizedDescription)
+                                }
+                            })
+                            
+                            //Para setear el timestamp del ultimo mensaje en firebase
+                            let timestampRef = databaseRef.child("chatrooms").child(self.chatRoomId).child("timestamp")
+                            timestampRef.setValue(NSDate().timeIntervalSince1970, withCompletionBlock: { (error, ref) in
+                                
+                                if error == nil{
+                                    
+                                    
+                                }else{
+                                    print(error!.localizedDescription)
+                                }
+                            })
+                            
+                            //Que haya un sonido cuando mando un mesaje
+                            JSQSystemSoundPlayer.jsq_playMessageSentSound()
+                            self.finishSendingMessage()
+                            
+                        }else{
+                            print(error!.localizedDescription)
+                        }
+                    })
+                }else{
+                    print(error!.localizedDescription)
+                }
+            })
+        }else{
+            
+            let videoPath = "messageWithMedia\(chatRoomId + NSUUID().uuidString)/video.mp4"
+            let videoRef = storageRef.child(videoPath)
+            
+            let metaData = FIRStorageMetadata()
+            metaData.contentType = "vide0/mp4"
+            
+            let videoUrl = NSData(contentsOf: withVideo!)
+            videoRef.put(videoUrl as! Data, metadata: metaData, completion: { (metadata, error) in
+                
+                if error == nil{
+                    
+                    let message = Message(text: "", username: self.senderDisplayName, senderId: self.senderId, mediaType: "Video", mediaUrl: String(describing: metadata!.downloadURL()!))
+                    let messageRef = databaseRef.child("chatrooms").child(self.chatRoomId).child("messages").childByAutoId()
+                    
+                    messageRef.setValue(message.toAny(), withCompletionBlock: { (error, ref) in
+                        
+                        if error == nil{
+                            //Para setear el lastMessage de la conversacion en firebase
+                            let lastMessageRef = databaseRef.child("chatrooms").child(self.chatRoomId).child("lastMessage")
+                            lastMessageRef.setValue("Video", withCompletionBlock: { (error, ref) in
+                                
+                                if error == nil{
+                                    //Para notificar al ChatListVC sobre el cambio en lastMessage
+                                    NotificationCenter.default.post(name: NSNotification.Name(rawValue: "updateChats"), object: nil)
+                                    
+                                }else{
+                                    print(error!.localizedDescription)
+                                }
+                            })
+                            
+                            //Para setear el timestamp del ultimo mensaje en firebase
+                            let timestampRef = databaseRef.child("chatrooms").child(self.chatRoomId).child("timestamp")
+                            timestampRef.setValue(NSDate().timeIntervalSince1970, withCompletionBlock: { (error, ref) in
+                                
+                                if error == nil{
+                                    
+                                    
+                                }else{
+                                    print(error!.localizedDescription)
+                                }
+                            })
+                            
+                            //Que haya un sonido cuando mando un mesaje
+                            JSQSystemSoundPlayer.jsq_playMessageSentSound()
+                            self.finishSendingMessage()
+                            
+                        }else{
+                            print(error!.localizedDescription)
+                        }
+                    })
+                }else{
+                    print(error!.localizedDescription)
+                }
+            })
+            
+            
+        }
+        
+        
+        
+    }
+    
+    private func getMedia(mediaType: CFString){
+        
+        let imagePicker = UIImagePickerController()
+        imagePicker.delegate = self
+        imagePicker.allowsEditing = true
+        
+        if mediaType == kUTTypeImage{
+            
+            imagePicker.mediaTypes = [mediaType as String]
+            
+        }else if mediaType == kUTTypeMovie{
+            
+            imagePicker.mediaTypes = [mediaType as String]
+        }
+        
+        present(imagePicker, animated: true, completion: nil)
+        
+    }
+    
+    //MARK: ImagePicker Methods
+    
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
+        
+        if let picture = info[UIImagePickerControllerOriginalImage] as? UIImage{
+            
+            self.saveMediaMessage(withImage: picture, withVideo: nil)
+            
+        }else if let videoUrl = info[UIImagePickerControllerMediaURL] as? URL{
+            
+            self.saveMediaMessage(withImage: nil, withVideo: videoUrl)
+        }
+        
+        self.dismiss(animated: true) { 
+            //JSQSystemSoundPlayer.jsq_playMessageSentSound()
+            //self.finishSendingMessage()
+
+        }
+        
     }
 }
 
