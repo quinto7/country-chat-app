@@ -13,11 +13,13 @@ import FirebaseStorage
 import FirebaseDatabase
 import MobileCoreServices
 import AVKit
+import SDWebImage
 
 class ChatVC: JSQMessagesViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
 
     var chatRoomId:String!
     var otherUsername:String!
+    //let photoCache = NSCache<NSString, AnyObject>()
     
     var outgoingBubbleImageView: JSQMessagesBubbleImage!
     var incomingBubbleImageView: JSQMessagesBubbleImage!
@@ -62,6 +64,7 @@ class ChatVC: JSQMessagesViewController, UIImagePickerControllerDelegate, UINavi
     func fetchMessages(){
         
         let messageQuery = databaseRef.child("chatrooms").child(chatRoomId).child("messages").queryLimited(toLast: 30)
+        
         messageQuery.observe(.childAdded, with: { (snapshot) in
             
             let values = snapshot.value as! Dictionary<String, Any>
@@ -72,31 +75,85 @@ class ChatVC: JSQMessagesViewController, UIImagePickerControllerDelegate, UINavi
             let mediaType = values["mediaType"] as! String
             let mediaUrl = values["mediaUrl"] as! String
 
+            //let startTime = CFAbsoluteTimeGetCurrent() //Numero mas alto es mas rapido
+            
             switch mediaType{
             case "Text":
                 
                 self.messages.append(JSQMessage(senderId: senderId, displayName: displayName, text: text))
-                
+             
+//                print("Text message: \(CFAbsoluteTimeGetCurrent() - startTime)")
             case "Image":
+        //MANUALMENTE
+//                var photo = JSQPhotoMediaItem(image: nil)!
+//                
+//                //Si ya se bajo la imagen anteriormente, no neceistamos que se baje de nuevo (Cache)
+//                if let cachedPhoto = self.photoCache.object(forKey: mediaUrl as NSString) as? JSQPhotoMediaItem{
+//                    //No hace falta bajar de nuevo la imagen
+//                    
+//                    photo = cachedPhoto
+//                    self.collectionView.reloadData()
+//                }else{
+//                    //Hay q bajar de nuevo la img
+//                    
+//                    //Para ejecutar algo(muy pesado) en background thread y hacer mas rapido el NSData
+//                    DispatchQueue.global(qos: DispatchQoS.QoSClass.userInteractive).async {
+//                        let data = NSData(contentsOf: URL(string: mediaUrl)!) //Func lenta
+//                        //Siempre todo lo que es UI tiene que ser ejecutado en la Main Queue
+//                        DispatchQueue.main.async {
+//                            
+//                            let picture = UIImage(data: data as! Data)
+//                            photo.image = picture
+//                            self.collectionView.reloadData()
+//                            
+//                            //Lo pongo en el cache par a la porixima
+//                            self.photoCache.setObject(photo, forKey: mediaUrl as NSString)
+//                        }
+//                        
+//                    }
+//                }
+          
+                //Lo mismo pero con REPO (Mejor)
+                let photo = JSQPhotoMediaItem(image: nil)!
+                let downloader = SDWebImageDownloader.shared()
+                downloader!.downloadImage(with: URL(string:mediaUrl), options: [], progress: nil, completed: { (image, data, error, finished) in
+                    
+                    DispatchQueue.main.async {
+                        
+                        photo.image = image
+                        self.collectionView.reloadData()
+                    }
+                    
+                })
                 
-                let data = NSData(contentsOf: URL(string: mediaUrl)!)
-                let picture = UIImage(data: data as! Data)
-                let photo = JSQPhotoMediaItem(image: picture)
                 self.messages.append(JSQMessage(senderId: senderId, displayName: displayName, media: photo))
                 
+                if self.senderId == senderId{
+                    photo.appliesMediaViewMaskAsOutgoing = true
+                }else{
+                    photo.appliesMediaViewMaskAsOutgoing = false
+                }
+                
+                //print("Image message: \(CFAbsoluteTimeGetCurrent() - startTime)")
+
+                
             case "Video":
+                
                 
                 if let url = URL(string: mediaUrl){
                     
                     let video = JSQVideoMediaItem(fileURL: url, isReadyToPlay: true)
                     self.messages.append(JSQMessage(senderId: senderId, displayName: displayName, media: video))
                     
+                    //print("Video message: \(CFAbsoluteTimeGetCurrent() - startTime)")
+
+                    
                 }
-                
+             
             default:
                 break
             }
-            
+            self.collectionView.reloadData()
             self.finishReceivingMessage()
             
         }) { (error) in
@@ -104,6 +161,8 @@ class ChatVC: JSQMessagesViewController, UIImagePickerControllerDelegate, UINavi
             print(error.localizedDescription)
         }
     }
+    
+    
     
     //Para monitorear si el usuario esta escribiendo
     
@@ -228,6 +287,21 @@ class ChatVC: JSQMessagesViewController, UIImagePickerControllerDelegate, UINavi
         return cell
     }
     
+    //Para ver los videos en la app
+    override func collectionView(_ collectionView: JSQMessagesCollectionView!, didTapMessageBubbleAt indexPath: IndexPath!) {
+        
+        let message = messages[indexPath.item]
+        
+        if message.isMediaMessage{
+            if let media = message.media as? JSQVideoMediaItem{
+                let videoplayer = AVPlayer(url: media.fileURL)
+                let avplayerviewcontroller = AVPlayerViewController()
+                avplayerviewcontroller.player = videoplayer
+                present(avplayerviewcontroller, animated: true, completion: nil)
+            }
+        }
+    }
+    
     override func didPressAccessoryButton(_ sender: UIButton!) {
         
         let alertcontroller = UIAlertController(title: "Media", message: "Choose your media type", preferredStyle: .actionSheet)
@@ -249,20 +323,7 @@ class ChatVC: JSQMessagesViewController, UIImagePickerControllerDelegate, UINavi
         present(alertcontroller, animated: true, completion: nil)
         
     }
-    //Para ver los videos en la app
-    override func collectionView(_ collectionView: JSQMessagesCollectionView!, didTapMessageBubbleAt indexPath: IndexPath!) {
-        
-        let message = messages[indexPath.item]
-        
-        if message.isMediaMessage{
-            if let media = message.media as? JSQVideoMediaItem{
-                let videoplayer = AVPlayer(url: media.fileURL)
-                let avplayerviewcontroller = AVPlayerViewController()
-                avplayerviewcontroller.player = videoplayer
-                present(avplayerviewcontroller, animated: true, completion: nil)
-            }
-        }
-    }
+    
     
     //Save image and videos in firebase
     private func saveMediaMessage(withImage image:UIImage?, withVideo: URL?){

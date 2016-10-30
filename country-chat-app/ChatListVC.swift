@@ -10,6 +10,7 @@ import UIKit
 import FirebaseDatabase
 import FirebaseStorage
 import FirebaseAuth
+import SDWebImage
 
 class ChatListVC: UITableViewController {
 
@@ -50,8 +51,16 @@ class ChatListVC: UITableViewController {
             newChat.ref = ref
             newChat.key = key
             
-            self.chatsArray.insert(newChat, at: 0)
-            self.tableView.reloadData()
+            if lastMessage == ""{
+                //Eliminar chat vacio de firebase?
+                print("chat no iniciado")
+                
+            }else{
+                self.chatsArray.insert(newChat, at: 0)
+                self.tableView.reloadData()
+            }
+            
+        
             
             }) { (error) in
                 
@@ -80,8 +89,15 @@ class ChatListVC: UITableViewController {
             newChat.ref = ref
             newChat.key = key
             
-            self.chatsArray.insert(newChat, at: 0)
-            self.tableView.reloadData()
+            if lastMessage == ""{
+                
+                
+            }else{
+                self.chatsArray.insert(newChat, at: 0)
+                self.tableView.reloadData()
+            }
+            
+
             
         }) { (error) in
             
@@ -108,6 +124,7 @@ class ChatListVC: UITableViewController {
         var userPhotoUrlStr: String? = ""
         
         if chatsArray[indexPath.row].userId == FIRAuth.auth()!.currentUser!.uid{
+            
             userPhotoUrlStr = chatsArray[indexPath.row].otherUserImageUrl
             cell.usernameLbl.text = chatsArray[indexPath.row].otherUsername
         }else{
@@ -140,18 +157,24 @@ class ChatListVC: UITableViewController {
         cell.lastMessageLbl.text = chatsArray[indexPath.row].lastMessage
         
         if let urlString = userPhotoUrlStr{
-            FIRStorage.storage().reference(forURL: urlString).data(withMaxSize: 1 * 1024 * 1024, completion: { (imgData, error) in
+            
+            DispatchQueue.main.async{
                 
-                if let error = error{
-                    print(error.localizedDescription)
-                }else{
-                    DispatchQueue.main.async{
-                        if let data = imgData{
-                            cell.userImage.image = UIImage(data: data)
-                        }
-                    }
-                }
-            })
+                cell.userImage.sd_setImage(with: URL(string: urlString), placeholderImage: UIImage(named: "profile-placeholder"))
+            }
+            
+//            FIRStorage.storage().reference(forURL: urlString).data(withMaxSize: 1 * 1024 * 1024, completion: { (imgData, error) in
+//                
+//                if let error = error{
+//                    print(error.localizedDescription)
+//                }else{
+//                    DispatchQueue.main.async{
+//                        if let data = imgData{
+//                            cell.userImage.image = UIImage(data: data)
+//                        }
+//                    }
+//                }
+//            })
         }
 
         return cell

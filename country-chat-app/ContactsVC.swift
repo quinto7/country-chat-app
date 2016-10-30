@@ -101,20 +101,23 @@ class ContactsVC: UIViewController, UITableViewDelegate, UITableViewDataSource {
         
         cell.usernameLbl.text = usersArray[indePath.row].username
         cell.countryLbl.text = usersArray[indePath.row].country
-        
-        FIRStorage.storage().reference(forURL: usersArray[indePath.row].profileImageUrl).data(withMaxSize: 1 * 1024 * 1024) { (imgData, error) in
-            
-            if let error = error{
-                print(error.localizedDescription)
-            }else{
-                DispatchQueue.main.async {
-                    if let data = imgData{
-                        cell.userImage.image = UIImage(data: data)
-                    }
-                    
-                }
-            }
+        DispatchQueue.main.async {
+            cell.userImage.sd_setImage(with: URL(string:usersArray[indePath.row].profileImageUrl), placeholderImage: UIImage(named: "profile-placeholder"))
         }
+        
+//        FIRStorage.storage().reference(forURL: usersArray[indePath.row].profileImageUrl).data(withMaxSize: 1 * 1024 * 1024) { (imgData, error) in
+//            
+//            if let error = error{
+//                print(error.localizedDescription)
+//            }else{
+//                DispatchQueue.main.async {
+//                    if let data = imgData{
+//                        cell.userImage.image = UIImage(data: data)
+//                    }
+//                    
+//                }
+//            }
+//        }
     }
     
     //MARK: Segue Method
