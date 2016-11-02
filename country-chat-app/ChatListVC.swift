@@ -53,7 +53,7 @@ class ChatListVC: UITableViewController {
             
             if lastMessage == ""{
                 //Eliminar chat vacio de firebase?
-                print("chat no iniciado")
+                
                 
             }else{
                 self.chatsArray.insert(newChat, at: 0)
@@ -90,6 +90,7 @@ class ChatListVC: UITableViewController {
             newChat.key = key
             
             if lastMessage == ""{
+                
                 
                 
             }else{
