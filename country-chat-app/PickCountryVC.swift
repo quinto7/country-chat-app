@@ -7,6 +7,8 @@
 //
 
 import UIKit
+import FirebaseAuth
+import FirebaseDatabase
 
 class PickCountryVC: UIViewController, UIPickerViewDelegate, UIPickerViewDataSource {
 
@@ -14,6 +16,9 @@ class PickCountryVC: UIViewController, UIPickerViewDelegate, UIPickerViewDataSou
     
     var countryArray = [String]()
     var pickerView: UIPickerView!
+    var user: User!
+    var chatFunctions = ChatFunctions()
+    var selectedUsers = [User]()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -41,7 +46,101 @@ class PickCountryVC: UIViewController, UIPickerViewDelegate, UIPickerViewDataSou
 
     @IBAction func continueBtnPressed(_ sender: AnyObject) {
         
-        if let country = countryTextField.text, (country.characters.count > 0){
+        if let choosenCountry = countryTextField.text, (choosenCountry.characters.count > 0){
+            
+            //Recuperar los paises de todos los usuarios
+//            databaseRef.child("users").observeSingleEvent(of: .value, with: { (snapshot) in
+//                
+//                if let users = snapshot.value as? Dictionary<String, AnyObject>{
+//                    for (key, value) in users{
+//                        if let dict = value as? Dictionary<String, AnyObject>{
+//                            let userUid = dict["uid"] as! String
+//                            let username = dict["username"] as! String
+//                            let profileImage = dict["profileImageUrl"] as! String
+//                            if let country = dict["country"] as? String{
+//                                let uid = key
+//                                
+//                                if choosenCountry == country{
+//                                    
+//                                    if uid != FIRAuth.auth()!.currentUser!.uid{
+//                                        
+//                                                            
+//                                    //Como hacer para que solo se cree un CHAT. Al ser un for loop se crean todos los chats que tienen el pais elejido.
+//                                                            
+//                                        let currentUser = User(username: FIRAuth.auth()!.currentUser!.displayName!, userId: FIRAuth.auth()!.currentUser!.uid, profileImageUrl: String(describing: FIRAuth.auth()!.currentUser!.photoURL!))
+//                                        let otherUser = User(username: username, userId: userUid, profileImageUrl: profileImage)
+//                                                            
+//                                        self.chatFunctions.startChat(user1: currentUser, user2: otherUser)
+//                                                            
+//                                                            
+//                                                            
+//                                    }else{
+//                                        print("Same user avoid. Choosen: \(choosenCountry), \(username)  country:\(country)")
+//                                    }
+//                                    
+//                                    
+//                                }else{
+//                                    
+//                                    print("Don't match. Choosen: \(choosenCountry), \(username)  country:\(country)")
+//                                }
+//                                
+//                            }
+//                        }
+//                    }
+//                    
+//                    
+//                        
+//                    
+//                    
+//                    
+//                    
+//                }
+//                
+//                
+//                
+//                
+//                
+//                }, withCancel: { (error) in
+//                    
+//                    print(error.localizedDescription)
+//            })
+            
+           
+            
+            databaseRef.child("users").queryOrdered(byChild: "country").queryEqual(toValue: choosenCountry).observeSingleEvent(of: .value, with: { (snapshot) in
+                
+                for user in snapshot.children{
+                    
+                    let newUser = User(snapshot: user as! FIRDataSnapshot)
+                    
+                    //Compruebo para que no aparezca el usuario q esta loggeado
+                    if newUser.uid != FIRAuth.auth()!.currentUser!.uid{
+                        //Se agregan todos los usuarios con el pais seleccionado
+                        self.selectedUsers.append(newUser)
+                        
+                    }
+                    
+                }
+                
+                let randomNumber = Int(arc4random_uniform(UInt32(self.selectedUsers.count)))
+                print(randomNumber)
+                
+                let randomUser = self.selectedUsers[randomNumber]
+                self.selectedUsers.remove(at: randomNumber)
+                
+                let currentUser = User(username: FIRAuth.auth()!.currentUser!.displayName!, userId: FIRAuth.auth()!.currentUser!.uid, profileImageUrl: String(describing: FIRAuth.auth()!.currentUser!.photoURL!))
+                let otherUser = User(username: randomUser.username, userId: randomUser.uid, profileImageUrl: randomUser.profileImageUrl)
+                
+                self.chatFunctions.startChat(user1: currentUser, user2: otherUser)
+                
+                
+                }, withCancel: { (error) in
+                    
+                    print(error.localizedDescription)
+            })
+            
+            
+            
             
             
             

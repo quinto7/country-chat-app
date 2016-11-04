@@ -57,6 +57,8 @@ struct ChatFunctions {
                     for chatRoom in values{
                         if chatRoom.value["chatRoomId"] as! String == chatRoomId{
                             createChatRoom = false
+                            
+                            print("ChatRoom ya existe. No se deberia crear un nuevo chatRoom.")
                         }
                     }
                 }
@@ -65,6 +67,8 @@ struct ChatFunctions {
             //Si no existe, se va a crear una
             if createChatRoom{
                 self.createNewChatRoomId(username: user1.username, otherUsername: user2.username, userId: user1.uid, otherUserId: user2.uid, members: members, chatRoomId: chatRoomId, lastMessage: "", userImageUrl: user1.profileImageUrl!, otherUserImageUrl: user2.profileImageUrl!, timestamp: NSNumber(value: NSDate().timeIntervalSince1970))
+                
+                print("NEW MATCH: chatRoom creado")
             }
             
             
