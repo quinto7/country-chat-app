@@ -12,6 +12,7 @@ import FirebaseDatabase
 struct ChatFunctions {
     
     var chatRoom_Id = String()
+    var country:PickCountryVC!
     
     private var databaseRef:FIRDatabaseReference{
         
@@ -59,6 +60,7 @@ struct ChatFunctions {
                             createChatRoom = false
                             
                             print("ChatRoom ya existe. No se deberia crear un nuevo chatRoom.")
+                            
                         }
                     }
                 }
